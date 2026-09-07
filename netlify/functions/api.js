@@ -3,6 +3,10 @@
 // Only the FINAL AGGREGATED NUMBERS are stored (one blob per week, keyed by date).
 import { getStore } from "@netlify/blobs";
 
+// TEMP: password gate disabled for testing. Set to false (or delete this block and
+// restore the checks below) to re-enable the DASHBOARD_PASSWORD gate.
+const GATE_DISABLED = true;
+
 const password = () => process.env.DASHBOARD_PASSWORD || "";
 
 function json(obj, status = 200) {
@@ -15,6 +19,7 @@ function json(obj, status = 200) {
 // Auth: if no password is configured the site runs open (prevents lockout on first
 // deploy). Once DASHBOARD_PASSWORD is set in Netlify env, every data call needs it.
 function authorized(req) {
+  if (GATE_DISABLED) return true;
   const pw = password();
   if (!pw) return true;
   return req.headers.get("x-dash-key") === pw;
@@ -25,6 +30,7 @@ export default async (req) => {
 
   // ---- /api/auth ----
   if (url.pathname.endsWith("/auth")) {
+    if (GATE_DISABLED) return json({ required: false, ok: true });
     const pw = password();
     if (req.method === "GET") return json({ required: !!pw });
     if (req.method === "POST") {
