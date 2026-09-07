@@ -22,7 +22,9 @@ export default async (req) => {
   }
 
   // ---- /api/snapshots ----
-  const store = getStore({ name: "inventory-snapshots", consistency: "strong" });
+  // New and Used inventory are stored in separate blob stores (?kind=used for Used).
+  const used = url.searchParams.get("kind") === "used";
+  const store = getStore({ name: used ? "inventory-snapshots-used" : "inventory-snapshots", consistency: "strong" });
 
   if (req.method === "GET") {
     const date = url.searchParams.get("date");

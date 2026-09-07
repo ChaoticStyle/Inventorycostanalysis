@@ -32,6 +32,13 @@ button { font: inherit; cursor: pointer; }
 .btn.ghost { background: rgba(255,255,255,.12); color: #fff; }
 .btn.primary:hover { background: var(--blue-2); }
 
+/* ---------- Top-level New/Used tabs ---------- */
+.toptabs { max-width: 1040px; margin: 18px auto 0; padding: 0 20px; display: flex; gap: 8px; }
+.toptab { border: 0; background: #e9edf6; color: var(--muted); padding: 10px 26px; border-radius: 10px 10px 0 0;
+  font-weight: 700; font-size: 15px; }
+.toptab.active { background: #fff; color: var(--navy); box-shadow: 0 -2px 6px rgba(16,30,60,.05); }
+#newView, #usedView { max-width: 1040px; margin: 0 auto; }
+
 /* ---------- Dropzone ---------- */
 .dropzone { margin: 40px auto; max-width: 720px; padding: 44px; background: var(--card);
   border: 2px dashed #cdd6e8; border-radius: 18px; text-align: center; transition: .15s; }

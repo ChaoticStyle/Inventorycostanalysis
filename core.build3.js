@@ -133,9 +133,61 @@
     return Object.keys(map).sort(function (a, b) { return (+a || 9999) - (+b || 9999); });
   }
 
+  // ---------------- USED / PREOWNED ----------------
+  // Different export layout: STK.# | YR | MAKE & MODEL | TYPE | VIN # | LOC | DAYS | TOTAL COST
+  // All units, no Motors/Towable split, no status. Grouped by model year (2-digit, as
+  // shown) and by 100-day age bands. A DAYS value of -1 is normalized to 1.
+  var USED_HEADER_MAP = {
+    "STK.#": "stock", "STK #": "stock", "STOCK": "stock",
+    "YR": "year", "YEAR": "year", "TYPE": "type", "DAYS": "days", "TOTAL COST": "cost",
+  };
+  var USED_FALLBACK = { stock: 0, year: 1, type: 3, days: 6, cost: 7 };
+
+  function usedAgeBand(days, width) {
+    width = width || 100;
+    var d = num(days); if (d < 0) d = 1;         // -1 (just arrived) counts as 1
+    var lo = Math.floor(d / width) * width;
+    return { lo: lo, label: lo + "-" + (lo + width - 1) };
+  }
+
+  function buildUsed(rawRows) {
+    var header = null, cols = {};
+    // rawRows: array of arrays (grid). First non-empty row = header.
+    if (rawRows.length && Array.isArray(rawRows[0])) {
+      header = rawRows[0].map(function (c) { return c == null ? "" : String(c).trim().toUpperCase(); });
+      Object.keys(USED_HEADER_MAP).forEach(function (h) {
+        var i = header.indexOf(h); if (i >= 0 && cols[USED_HEADER_MAP[h]] === undefined) cols[USED_HEADER_MAP[h]] = i;
+      });
+    }
+    Object.keys(USED_FALLBACK).forEach(function (f) { if (cols[f] === undefined) cols[f] = USED_FALLBACK[f]; });
+
+    var yrCount = {}, yrCost = {}, ageCount = {}, ageCost = {}, ageLabel = {}, total = 0, grand = 0, blank = 0;
+    for (var i = 1; i < rawRows.length; i++) {
+      var r = rawRows[i];
+      var stock = r[cols.stock], yr = r[cols.year];
+      if ((stock == null || stock === "") && (yr == null || yr === "")) { if (++blank > 5) break; continue; }
+      blank = 0;
+      var cost = num(r[cols.cost]);
+      var y = String(yr).trim();
+      yrCount[y] = (yrCount[y] || 0) + 1;
+      yrCost[y] = (yrCost[y] || 0) + cost;
+      var b = usedAgeBand(r[cols.days]);
+      ageCount[b.lo] = (ageCount[b.lo] || 0) + 1;
+      ageCost[b.lo] = (ageCost[b.lo] || 0) + cost;
+      ageLabel[b.lo] = b.label;
+      total += 1; grand += cost;
+    }
+    var maxLo = 0; Object.keys(ageLabel).forEach(function (k) { maxLo = Math.max(maxLo, +k); });
+    for (var lo = 0; lo <= maxLo; lo += 100) if (!ageLabel[lo]) ageLabel[lo] = lo + "-" + (lo + 99);
+    var ageBands = Object.keys(ageLabel).map(Number).sort(function (a, b2) { return a - b2; })
+      .map(function (lo2) { return { lo: lo2, label: ageLabel[lo2], units: ageCount[lo2] || 0, cost: ageCost[lo2] || 0 }; });
+
+    return { total: total, grand: grand, yrCount: yrCount, yrCost: yrCost, ageBands: ageBands };
+  }
+
   return {
     MOTOR_TYPES: MOTOR_TYPES, TOW_TYPES: TOW_TYPES, BUCKETS: BUCKETS,
-    analyze: analyze, buildSegments: buildSegments,
+    analyze: analyze, buildSegments: buildSegments, buildUsed: buildUsed,
     parseDateFromName: parseDateFromName, sortedYears: sortedYears,
   };
 });

@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>New Inventory — Weekly Dashboard</title>
-  <link rel="stylesheet" href="styles.build2.css" />
+  <title>Inventory Cost Analysis</title>
+  <link rel="stylesheet" href="styles.build3.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
@@ -15,97 +15,137 @@
       <div class="brand">
         <div class="logo">RV</div>
         <div>
-          <div class="title">New Inventory — Weekly Dashboard</div>
+          <div class="title">Inventory Cost Analysis</div>
           <div id="dateline" class="subtitle">Drop this week's export to begin</div>
         </div>
       </div>
       <div class="topbar-actions">
         <button id="uploadBtn" class="btn primary">Upload export</button>
         <input id="fileInput" type="file" accept=".xlsm,.xlsx,.xls" hidden />
+        <input id="uFileInput" type="file" accept=".xlsm,.xlsx,.xls" hidden />
         <button id="weeksBtn" class="btn ghost">Saved weeks</button>
       </div>
     </header>
 
-    <!-- Empty state / dropzone -->
-    <section id="dropzone" class="dropzone">
-      <div class="dz-inner">
-        <div class="dz-icon">⬆</div>
-        <h2>Drop the “INVENTORY WITH GL COSTS” file here</h2>
-        <p>or <button id="dzPick" class="linkbtn">choose a file</button>. It’s read in your browser; only the final weekly numbers are saved.</p>
-      </div>
-    </section>
+    <!-- Top-level New / Used tabs -->
+    <nav class="toptabs" id="toptabs">
+      <button class="toptab active" data-mode="new">New</button>
+      <button class="toptab" data-mode="used">Used</button>
+    </nav>
 
-    <main id="dash" hidden>
-      <!-- Tabs -->
-      <nav class="tabs" id="tabs">
-        <button class="tab active" data-seg="All">All New</button>
-        <button class="tab" data-seg="Motors">All Motors</button>
-        <button class="tab" data-seg="Towable">All Towables</button>
-      </nav>
-
-      <div id="metaNote" class="meta-note"></div>
-
-      <!-- KPI cards -->
-      <section class="kpis" id="kpis"></section>
-
-      <!-- Week-to-week comparison (Available = STAT A) -->
-      <section class="card">
-        <div class="card-head">
-          <h3>Week-to-Week Comparison</h3>
-          <span id="cmpDates" class="tag"></span>
+    <!-- ============================ NEW ============================ -->
+    <div id="newView">
+      <section id="dropzone" class="dropzone">
+        <div class="dz-inner">
+          <div class="dz-icon">⬆</div>
+          <h2>Drop the <b>New</b> “INVENTORY WITH GL COSTS” file here</h2>
+          <p>or <button id="dzPick" class="linkbtn">choose a file</button>. It’s read in your browser; only the final weekly numbers are saved.</p>
         </div>
-        <p class="note">“Available” = units in status A. Costs by year below sum to <b>$ in Available</b>.</p>
-        <div class="table-wrap">
-          <table id="cmpTable"></table>
+      </section>
+
+      <main id="dash" hidden>
+        <nav class="tabs" id="tabs">
+          <button class="tab active" data-seg="All">All New</button>
+          <button class="tab" data-seg="Motors">All New Motors</button>
+          <button class="tab" data-seg="Towable">All New Towables</button>
+        </nav>
+
+        <div id="metaNote" class="meta-note"></div>
+        <section class="kpis" id="kpis"></section>
+
+        <section class="card">
+          <div class="card-head"><h3>Week-to-Week Comparison</h3><span id="cmpDates" class="tag"></span></div>
+          <p class="note">“Available” = units in status A. Costs by year below sum to <b>$ in Available</b>.</p>
+          <div class="table-wrap"><table id="cmpTable"></table></div>
+          <div id="cmpStatus" class="dollar-row"></div>
+        </section>
+
+        <section class="card">
+          <div class="card-head"><h3>Weekly Trend</h3>
+            <select id="trendMetric" class="metric-select">
+              <option value="availUnits">Available units (A)</option>
+              <option value="availCost">$ in Available</option>
+              <option value="aoUnits">Units (A + O)</option>
+              <option value="onOrder">$ in On Order</option>
+              <option value="soldAvail">$ in Sold Available</option>
+              <option value="totalUnits">Total units (A+SA+O)</option>
+            </select>
+          </div>
+          <p class="note" id="trendNote"></p>
+          <div class="chart-wrap"><canvas id="trendChart"></canvas></div>
+        </section>
+
+        <section class="card">
+          <div class="card-head"><h3>Units &amp; Cost by Model Year</h3><span class="tag muted">Available + On Order</span></div>
+          <p class="note">Excludes Sold Available (SA). Percent = share of A+O total. Δ = change vs prior week.</p>
+          <div class="table-wrap"><table id="yearTable"></table></div>
+        </section>
+
+        <section class="card">
+          <div class="card-head"><h3>Inventory Cost by Status</h3><span class="tag muted">A · SA · O</span></div>
+          <p class="note">Sold Order (SO) excluded. Total Units below counts A + SA + O.</p>
+          <div class="table-wrap"><table id="statusTable"></table></div>
+        </section>
+
+        <section class="card">
+          <div class="card-head"><h3>Aging Inventory by Cost</h3><span class="tag muted">Available + On Order</span></div>
+          <p class="note">Units grouped by age in days; % under each bar is its share of A+O cost.</p>
+          <div class="chart-wrap"><canvas id="agingChart"></canvas></div>
+        </section>
+      </main>
+    </div>
+
+    <!-- ============================ USED ============================ -->
+    <div id="usedView" hidden>
+      <section id="uDropzone" class="dropzone">
+        <div class="dz-inner">
+          <div class="dz-icon">⬆</div>
+          <h2>Drop the <b>Used</b> “USED INVENTORY WITH GL COSTS” file here</h2>
+          <p>or <button id="uPick" class="linkbtn">choose a file</button>. Used is all units — not split by Motors/Towables.</p>
         </div>
-        <div id="cmpStatus" class="dollar-row"></div>
       </section>
 
-      <!-- Weekly trend -->
-      <section class="card">
-        <div class="card-head">
-          <h3>Weekly Trend</h3>
-          <select id="trendMetric" class="metric-select">
-            <option value="availUnits">Available units (A)</option>
-            <option value="availCost">$ in Available</option>
-            <option value="aoUnits">Units (A + O)</option>
-            <option value="onOrder">$ in On Order</option>
-            <option value="soldAvail">$ in Sold Available</option>
-            <option value="totalUnits">Total units (A+SA+O)</option>
-          </select>
-        </div>
-        <p class="note" id="trendNote"></p>
-        <div class="chart-wrap"><canvas id="trendChart"></canvas></div>
-      </section>
+      <main id="uDash" hidden>
+        <div id="uMeta" class="meta-note"></div>
+        <section class="kpis" id="uKpis"></section>
 
-      <!-- A+O year tables -->
-      <section class="card">
-        <div class="card-head"><h3>Units &amp; Cost by Model Year</h3><span class="tag muted">Available + On Order</span></div>
-        <p class="note">Excludes Sold Available (SA). Percent = share of A+O total. Δ = change vs prior week.</p>
-        <div class="table-wrap"><table id="yearTable"></table></div>
-      </section>
+        <section class="card">
+          <div class="card-head"><h3>Week-to-Week Comparison</h3><span id="uCmpDates" class="tag"></span></div>
+          <p class="note">All used units by model year (shown as on the sheet). Δ = change vs prior week.</p>
+          <div class="table-wrap"><table id="uYearTable"></table></div>
+        </section>
 
-      <!-- Status table -->
-      <section class="card">
-        <div class="card-head"><h3>Inventory Cost by Status</h3><span class="tag muted">A · SA · O</span></div>
-        <p class="note">Sold Order (SO) excluded. Total Units below counts A + SA + O.</p>
-        <div class="table-wrap"><table id="statusTable"></table></div>
-      </section>
+        <section class="card">
+          <div class="card-head"><h3>Weekly Trend</h3>
+            <select id="uTrendMetric" class="metric-select">
+              <option value="uTotalUnits">Total units</option>
+              <option value="uTotalCost">Total cost</option>
+            </select>
+          </div>
+          <p class="note" id="uTrendNote"></p>
+          <div class="chart-wrap"><canvas id="uTrendChart"></canvas></div>
+        </section>
 
-      <!-- Aging chart -->
-      <section class="card">
-        <div class="card-head"><h3>Aging Inventory by Cost</h3><span class="tag muted">Available + On Order</span></div>
-        <p class="note">Units grouped by age in days; % under each bar is its share of A+O cost.</p>
-        <div class="chart-wrap"><canvas id="agingChart"></canvas></div>
-      </section>
-    </main>
+        <section class="card">
+          <div class="card-head"><h3>Cost by Age (Days)</h3><span class="tag muted">100-day bands</span></div>
+          <p class="note">A DAYS value of -1 is counted as 1.</p>
+          <div class="table-wrap"><table id="uAgeTable"></table></div>
+        </section>
+
+        <section class="card">
+          <div class="card-head"><h3>Inventory Cost by Age (Days)</h3></div>
+          <p class="note">% under each bar is its share of total cost.</p>
+          <div class="chart-wrap"><canvas id="uAgingChart"></canvas></div>
+        </section>
+      </main>
+    </div>
   </div>
 
   <!-- Saved weeks drawer -->
   <div id="drawer" class="drawer" hidden>
     <div class="drawer-panel">
       <div class="drawer-head">
-        <h3>Saved weeks</h3>
+        <h3 id="drawerTitle">Saved weeks</h3>
         <button id="drawerClose" class="linkbtn">Close</button>
       </div>
       <p class="note">Each drop auto-saves its final numbers (keyed by the file's date). Delete removes that week from the server.</p>
@@ -116,7 +156,7 @@
 
   <div id="toast" class="toast" hidden></div>
 
-  <script src="core.build2.js"></script>
-  <script src="app.build3.js"></script>
+  <script src="core.build3.js"></script>
+  <script src="app.build4.js"></script>
 </body>
 </html>
