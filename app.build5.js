@@ -28,12 +28,12 @@
   function money0(x) { return "$" + Math.round(x).toLocaleString("en-US"); }
   function intc(x) { return Number(x).toLocaleString("en-US"); }
   function pct(part, whole) { return whole ? (part / whole * 100).toFixed(1) + "%" : "0.0%"; }
-  function signedInt(n) { return (n > 0 ? "+" : n < 0 ? "−" : "") + intc(Math.abs(n)); }
-  function signedMoney(x) { return (x >= 0 ? "+" : "−") + money(Math.abs(x)); }
+  function signedInt(n) { return (n > 0 ? "+" : n < 0 ? "-" : "") + intc(Math.abs(n)); }
+  function signedMoney(x) { return (x >= 0 ? "+" : "-") + money(Math.abs(x)); }
   function signedPct(cur, prev) {
     if (prev === 0) return cur === 0 ? "0%" : "new";
     var p = (cur - prev) / prev * 100;
-    return (p >= 0 ? "+" : "−") + Math.abs(p).toFixed(0) + "%";
+    return (p >= 0 ? "+" : "-") + Math.abs(p).toFixed(0) + "%";
   }
   function cls(n) { return n > 0 ? "pos" : n < 0 ? "neg" : "flat"; }
   function sumVals(o) { var s = 0; Object.keys(o).forEach(function (k) { s += o[k]; }); return s; }
