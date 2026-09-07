@@ -54,7 +54,12 @@
     $("gate").hidden = false; $("app").hidden = true; $("gateErr").hidden = !err;
   }
   function showApp() { $("gate").hidden = true; $("app").hidden = false; bootstrap(); }
+  // TEMP: password gate disabled for testing — open the app directly, no /api/auth call.
+  // To re-enable, restore the original initAuth (see git history) and set GATE_DISABLED=false
+  // in netlify/functions/api.js.
+  var GATE_DISABLED = true;
   async function initAuth() {
+    if (GATE_DISABLED) { showApp(); return; }
     var info = await fetch("/api/auth").then(function (r) { return r.json(); }).catch(function () { return { required: false }; });
     if (!info.required) { showApp(); return; }
     var saved = sessionStorage.getItem(KEY);
