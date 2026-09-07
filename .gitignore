@@ -1,0 +1,21 @@
+# dependencies
+node_modules/
+
+# local netlify
+.netlify/
+
+# secrets / env
+.env
+.env.*
+
+# inventory data must never be committed (raw exports & generated reports)
+*.xlsm
+*.xlsx
+*.xls
+*.docx
+*.skill
+__*
+
+# os / editor
+.DS_Store
+Thumbs.db

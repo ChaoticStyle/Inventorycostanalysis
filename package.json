@@ -1,0 +1,10 @@
+{
+  "name": "new-inventory-dashboard",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Weekly New Inventory cost dashboard — drop the GL cost export, see week-over-week comparison.",
+  "dependencies": {
+    "@netlify/blobs": "^8.1.0"
+  }
+}

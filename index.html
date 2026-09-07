@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>New Inventory — Weekly Dashboard</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
+</head>
+<body>
+  <!-- Password gate -->
+  <div id="gate" class="gate" hidden>
+    <form id="gateForm" class="gate-card">
+      <h1>New Inventory Dashboard</h1>
+      <p>Enter the access password to continue.</p>
+      <input id="gatePw" type="password" placeholder="Password" autocomplete="current-password" />
+      <button type="submit">Enter</button>
+      <div id="gateErr" class="gate-err" hidden>Incorrect password.</div>
+    </form>
+  </div>
+
+  <div id="app" hidden>
+    <header class="topbar">
+      <div class="brand">
+        <div class="logo">RV</div>
+        <div>
+          <div class="title">New Inventory — Weekly Dashboard</div>
+          <div id="dateline" class="subtitle">Drop this week's export to begin</div>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <button id="uploadBtn" class="btn primary">Upload export</button>
+        <input id="fileInput" type="file" accept=".xlsm,.xlsx,.xls" hidden />
+        <button id="weeksBtn" class="btn ghost">Saved weeks</button>
+      </div>
+    </header>
+
+    <!-- Empty state / dropzone -->
+    <section id="dropzone" class="dropzone">
+      <div class="dz-inner">
+        <div class="dz-icon">⬆</div>
+        <h2>Drop the “INVENTORY WITH GL COSTS” file here</h2>
+        <p>or <button id="dzPick" class="linkbtn">choose a file</button>. It’s read in your browser; only the final weekly numbers are saved.</p>
+      </div>
+    </section>
+
+    <main id="dash" hidden>
+      <!-- Tabs -->
+      <nav class="tabs" id="tabs">
+        <button class="tab active" data-seg="All">All New</button>
+        <button class="tab" data-seg="Motors">All Motors</button>
+        <button class="tab" data-seg="Towable">All Towables</button>
+      </nav>
+
+      <div id="metaNote" class="meta-note"></div>
+
+      <!-- KPI cards -->
+      <section class="kpis" id="kpis"></section>
+
+      <!-- Week-to-week comparison (Available = STAT A) -->
+      <section class="card">
+        <div class="card-head">
+          <h3>Week-to-Week Comparison</h3>
+          <span id="cmpDates" class="tag"></span>
+        </div>
+        <p class="note">“Available” = units in status A. Costs by year below sum to <b>$ in Available</b>.</p>
+        <div class="table-wrap">
+          <table id="cmpTable"></table>
+        </div>
+        <div id="cmpStatus" class="dollar-row"></div>
+      </section>
+
+      <!-- Weekly trend -->
+      <section class="card">
+        <div class="card-head">
+          <h3>Weekly Trend</h3>
+          <select id="trendMetric" class="metric-select">
+            <option value="availUnits">Available units (A)</option>
+            <option value="availCost">$ in Available</option>
+            <option value="aoUnits">Units (A + O)</option>
+            <option value="onOrder">$ in On Order</option>
+            <option value="soldAvail">$ in Sold Available</option>
+            <option value="totalUnits">Total units (A+SA+O)</option>
+          </select>
+        </div>
+        <p class="note" id="trendNote"></p>
+        <div class="chart-wrap"><canvas id="trendChart"></canvas></div>
+      </section>
+
+      <!-- A+O year tables -->
+      <section class="card">
+        <div class="card-head"><h3>Units &amp; Cost by Model Year</h3><span class="tag muted">Available + On Order</span></div>
+        <p class="note">Excludes Sold Available (SA). Percent = share of A+O total. Δ = change vs prior week.</p>
+        <div class="table-wrap"><table id="yearTable"></table></div>
+      </section>
+
+      <!-- Status table -->
+      <section class="card">
+        <div class="card-head"><h3>Inventory Cost by Status</h3><span class="tag muted">A · SA · O</span></div>
+        <p class="note">Sold Order (SO) excluded. Total Units below counts A + SA + O.</p>
+        <div class="table-wrap"><table id="statusTable"></table></div>
+      </section>
+
+      <!-- Aging chart -->
+      <section class="card">
+        <div class="card-head"><h3>Aging Inventory by Cost</h3><span class="tag muted">Available + On Order</span></div>
+        <p class="note">Units grouped by age in days; % under each bar is its share of A+O cost.</p>
+        <div class="chart-wrap"><canvas id="agingChart"></canvas></div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Saved weeks drawer -->
+  <div id="drawer" class="drawer" hidden>
+    <div class="drawer-panel">
+      <div class="drawer-head">
+        <h3>Saved weeks</h3>
+        <button id="drawerClose" class="linkbtn">Close</button>
+      </div>
+      <p class="note">Each drop auto-saves its final numbers (keyed by the file's date). Delete removes that week from the server.</p>
+      <div id="weeksList" class="weeks-list"></div>
+    </div>
+    <div class="drawer-scrim" id="drawerScrim"></div>
+  </div>
+
+  <div id="toast" class="toast" hidden></div>
+
+  <script src="inventory-core.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
