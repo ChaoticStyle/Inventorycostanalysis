@@ -3,8 +3,14 @@
 // Only the FINAL AGGREGATED NUMBERS are stored (one blob per week, keyed by date).
 import { getStore } from "@netlify/blobs";
 
-// No password gate. The dashboard is open; /api/snapshots is available to anyone with
-// the URL. (A gate can be reintroduced later — see git history for the auth version.)
+// Password gate. Set DASHBOARD_PASSWORD in Netlify env to require it; if unset the site
+// runs open (prevents lockout). Data calls must carry the password in the x-dash-key header.
+const password = () => process.env.DASHBOARD_PASSWORD || "";
+function authorized(req) {
+  const pw = password();
+  if (!pw) return true;
+  return req.headers.get("x-dash-key") === pw;
+}
 
 function json(obj, status = 200) {
   return new Response(JSON.stringify(obj), {
@@ -16,12 +22,20 @@ function json(obj, status = 200) {
 export default async (req) => {
   const url = new URL(req.url);
 
-  // ---- /api/auth ---- (kept as a harmless no-op so old cached front-ends don't error)
+  // ---- /api/auth ----
   if (url.pathname.endsWith("/auth")) {
-    return json({ required: false, ok: true });
+    const pw = password();
+    if (req.method === "GET") return json({ required: !!pw });
+    if (req.method === "POST") {
+      const body = await req.json().catch(() => ({}));
+      const ok = !pw || body.password === pw;
+      return json({ ok, required: !!pw }, ok ? 200 : 401);
+    }
+    return json({ error: "method not allowed" }, 405);
   }
 
   // ---- /api/snapshots ----
+  if (!authorized(req)) return json({ error: "unauthorized" }, 401);
   // New and Used inventory are stored in separate blob stores (?kind=used for Used).
   const used = url.searchParams.get("kind") === "used";
   const store = getStore({ name: used ? "inventory-snapshots-used" : "inventory-snapshots", consistency: "strong" });

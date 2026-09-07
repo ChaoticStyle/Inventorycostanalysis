@@ -41,9 +41,17 @@
     var t = $("toast"); t.textContent = msg; t.hidden = false;
     clearTimeout(toast._t); toast._t = setTimeout(function () { t.hidden = true; }, 2600);
   }
+  var KEY = "dash-key"; // sessionStorage holds the verified password for this session
+  function authHeaders() {
+    var h = { "content-type": "application/json" };
+    var k = sessionStorage.getItem(KEY); if (k) h["x-dash-key"] = k;
+    return h;
+  }
   async function api(path, opts) {
-    opts = opts || {}; opts.headers = { "content-type": "application/json" };
-    var res = await fetch(path, opts); return res.json();
+    opts = opts || {}; opts.headers = authHeaders();
+    var res = await fetch(path, opts);
+    if (res.status === 401) { openGate(true); throw new Error("unauthorized"); }
+    return res.json();
   }
   // append ?kind=used for used-mode calls; new mode uses the default store
   function ep(base, used) {
@@ -459,7 +467,29 @@
   $("drawerClose").addEventListener("click", function () { $("drawer").hidden = true; });
   $("drawerScrim").addEventListener("click", function () { $("drawer").hidden = true; });
 
-  // open in New mode
-  setMode("new");
-  bootstrapNew();
+  // ---------- password gate ----------
+  function openGate(err) { $("gate").hidden = false; $("app").hidden = true; $("gateErr").hidden = !err; }
+  function showApp() { $("gate").hidden = true; $("app").hidden = false; setMode("new"); bootstrapNew(); }
+  async function initAuth() {
+    var info = await fetch("/api/auth").then(function (r) { return r.json(); }).catch(function () { return { required: false }; });
+    if (!info.required) { showApp(); return; }
+    var saved = sessionStorage.getItem(KEY);
+    if (saved) {
+      var ok = await fetch("/api/auth", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ password: saved }) })
+        .then(function (r) { return r.ok; }).catch(function () { return false; });
+      if (ok) { showApp(); return; }
+      sessionStorage.removeItem(KEY);
+    }
+    openGate(false);
+  }
+  $("gateForm").addEventListener("submit", async function (e) {
+    e.preventDefault();
+    var pw = $("gatePw").value;
+    var res = await fetch("/api/auth", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ password: pw }) });
+    if (res.ok) { sessionStorage.setItem(KEY, pw); showApp(); } else openGate(true);
+  });
+  // show-password toggle so autofill can't silently submit a wrong value
+  $("gateShow").addEventListener("change", function (e) { $("gatePw").type = e.target.checked ? "text" : "password"; });
+
+  initAuth();
 })();

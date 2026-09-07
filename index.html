@@ -4,13 +4,26 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Inventory Cost Analysis</title>
-  <link rel="stylesheet" href="styles.build3.css" />
+  <link rel="stylesheet" href="styles.build4.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
 </head>
 <body>
-  <div id="app">
+  <!-- Password gate -->
+  <div id="gate" class="gate" hidden>
+    <form id="gateForm" class="gate-card" autocomplete="off">
+      <h1>Inventory Cost Analysis</h1>
+      <p>Enter the access password to continue.</p>
+      <input id="gatePw" type="password" placeholder="Password" name="dash-access"
+             autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" />
+      <label class="pw-show"><input id="gateShow" type="checkbox" /> Show password</label>
+      <button type="submit">Enter</button>
+      <div id="gateErr" class="gate-err" hidden>Incorrect password.</div>
+    </form>
+  </div>
+
+  <div id="app" hidden>
     <header class="topbar">
       <div class="brand">
         <div class="logo">RV</div>
@@ -157,6 +170,6 @@
   <div id="toast" class="toast" hidden></div>
 
   <script src="core.build3.js"></script>
-  <script src="app.build5.js"></script>
+  <script src="app.build6.js"></script>
 </body>
 </html>
