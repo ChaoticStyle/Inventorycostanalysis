@@ -23,7 +23,7 @@
   function intc(x) { return Number(x).toLocaleString("en-US"); }
   function pct(part, whole) { return whole ? (part / whole * 100).toFixed(1) + "%" : "0.0%"; }
   function signedInt(n) { return (n > 0 ? "+" : n < 0 ? "−" : "") + intc(Math.abs(n)); }
-  function signedMoney(x) { return (x >= 0 ? "+" : "−") + money0(Math.abs(x)); }
+  function signedMoney(x) { return (x >= 0 ? "+" : "−") + money(Math.abs(x)); }
   function signedPct(cur, prev) {
     if (prev === 0) return cur === 0 ? "0%" : "new";
     var p = (cur - prev) / prev * 100;
