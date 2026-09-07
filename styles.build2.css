@@ -80,9 +80,9 @@ tr.total td { font-weight: 800; color: var(--navy); border-top: 2px solid var(--
 
 /* ---------- Drawer ---------- */
 .drawer { position: fixed; inset: 0; z-index: 40; }
-.drawer-scrim { position: absolute; inset: 0; background: rgba(10,20,45,.4); }
+.drawer-scrim { position: absolute; inset: 0; background: rgba(10,20,45,.4); z-index: 0; }
 .drawer-panel { position: absolute; right: 0; top: 0; height: 100%; width: min(420px, 92vw);
-  background: #fff; box-shadow: var(--shadow); padding: 22px; overflow-y: auto; }
+  background: #fff; box-shadow: var(--shadow); padding: 22px; overflow-y: auto; z-index: 1; }
 .drawer-head { display: flex; justify-content: space-between; align-items: center; }
 .weeks-list { margin-top: 14px; display: flex; flex-direction: column; gap: 10px; }
 .week-item { display: flex; align-items: center; justify-content: space-between; gap: 10px;
