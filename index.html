@@ -10,18 +10,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
 </head>
 <body>
-  <!-- Password gate -->
-  <div id="gate" class="gate" hidden>
-    <form id="gateForm" class="gate-card">
-      <h1>New Inventory Dashboard</h1>
-      <p>Enter the access password to continue.</p>
-      <input id="gatePw" type="password" placeholder="Password" autocomplete="current-password" />
-      <button type="submit">Enter</button>
-      <div id="gateErr" class="gate-err" hidden>Incorrect password.</div>
-    </form>
-  </div>
-
-  <div id="app" hidden>
+  <div id="app">
     <header class="topbar">
       <div class="brand">
         <div class="logo">RV</div>
@@ -127,7 +116,7 @@
 
   <div id="toast" class="toast" hidden></div>
 
-  <script src="inventory-core.js?v=3"></script>
-  <script src="app.js?v=3"></script>
+  <script src="core.build2.js"></script>
+  <script src="app.build2.js"></script>
 </body>
 </html>

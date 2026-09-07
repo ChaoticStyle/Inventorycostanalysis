@@ -3,11 +3,8 @@
 // Only the FINAL AGGREGATED NUMBERS are stored (one blob per week, keyed by date).
 import { getStore } from "@netlify/blobs";
 
-// TEMP: password gate disabled for testing. Set to false (or delete this block and
-// restore the checks below) to re-enable the DASHBOARD_PASSWORD gate.
-const GATE_DISABLED = true;
-
-const password = () => process.env.DASHBOARD_PASSWORD || "";
+// No password gate. The dashboard is open; /api/snapshots is available to anyone with
+// the URL. (A gate can be reintroduced later — see git history for the auth version.)
 
 function json(obj, status = 200) {
   return new Response(JSON.stringify(obj), {
@@ -16,33 +13,15 @@ function json(obj, status = 200) {
   });
 }
 
-// Auth: if no password is configured the site runs open (prevents lockout on first
-// deploy). Once DASHBOARD_PASSWORD is set in Netlify env, every data call needs it.
-function authorized(req) {
-  if (GATE_DISABLED) return true;
-  const pw = password();
-  if (!pw) return true;
-  return req.headers.get("x-dash-key") === pw;
-}
-
 export default async (req) => {
   const url = new URL(req.url);
 
-  // ---- /api/auth ----
+  // ---- /api/auth ---- (kept as a harmless no-op so old cached front-ends don't error)
   if (url.pathname.endsWith("/auth")) {
-    if (GATE_DISABLED) return json({ required: false, ok: true });
-    const pw = password();
-    if (req.method === "GET") return json({ required: !!pw });
-    if (req.method === "POST") {
-      const body = await req.json().catch(() => ({}));
-      const ok = !pw || body.password === pw;
-      return json({ ok, required: !!pw }, ok ? 200 : 401);
-    }
-    return json({ error: "method not allowed" }, 405);
+    return json({ required: false, ok: true });
   }
 
   // ---- /api/snapshots ----
-  if (!authorized(req)) return json({ error: "unauthorized" }, 401);
   const store = getStore({ name: "inventory-snapshots", consistency: "strong" });
 
   if (req.method === "GET") {

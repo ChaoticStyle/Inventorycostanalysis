@@ -2,7 +2,6 @@
 (function () {
   "use strict";
   var Core = window.InventoryCore;
-  var KEY = "dash-key"; // sessionStorage holds the entered password
 
   var state = { snap: null, prior: null, seg: "All", chart: null,
     allWeeks: [], trendMetric: "availUnits", trendChart: null };
@@ -35,48 +34,12 @@
     var t = $("toast"); t.textContent = msg; t.hidden = false;
     clearTimeout(toast._t); toast._t = setTimeout(function () { t.hidden = true; }, 2600);
   }
-  function headers() {
-    var h = { "content-type": "application/json" };
-    var k = sessionStorage.getItem(KEY);
-    if (k) h["x-dash-key"] = k;
-    return h;
-  }
   async function api(path, opts) {
     opts = opts || {};
-    opts.headers = headers();
+    opts.headers = { "content-type": "application/json" };
     var res = await fetch(path, opts);
-    if (res.status === 401) { openGate(true); throw new Error("unauthorized"); }
     return res.json();
   }
-
-  // ---------- auth gate ----------
-  function openGate(err) {
-    $("gate").hidden = false; $("app").hidden = true; $("gateErr").hidden = !err;
-  }
-  function showApp() { $("gate").hidden = true; $("app").hidden = false; bootstrap(); }
-  // TEMP: password gate disabled for testing — open the app directly, no /api/auth call.
-  // To re-enable, restore the original initAuth (see git history) and set GATE_DISABLED=false
-  // in netlify/functions/api.js.
-  var GATE_DISABLED = true;
-  async function initAuth() {
-    if (GATE_DISABLED) { showApp(); return; }
-    var info = await fetch("/api/auth").then(function (r) { return r.json(); }).catch(function () { return { required: false }; });
-    if (!info.required) { showApp(); return; }
-    var saved = sessionStorage.getItem(KEY);
-    if (saved) {
-      var ok = await fetch("/api/auth", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ password: saved }) })
-        .then(function (r) { return r.ok; }).catch(function () { return false; });
-      if (ok) { showApp(); return; }
-    }
-    openGate(false);
-  }
-  $("gateForm").addEventListener("submit", async function (e) {
-    e.preventDefault();
-    var pw = $("gatePw").value;
-    var res = await fetch("/api/auth", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ password: pw }) });
-    if (res.ok) { sessionStorage.setItem(KEY, pw); showApp(); }
-    else openGate(true);
-  });
 
   // ---------- file handling ----------
   function readRows(wb) {
@@ -119,7 +82,7 @@
     try {
       await api("/api/snapshots", { method: "POST", body: JSON.stringify(snap) });
       toast("Saved snapshot for " + snap.dateDisplay);
-    } catch (e) { /* gate handles 401 */ }
+    } catch (e) { /* ignore save errors */ }
 
     // fetch prior week (latest before this date) for deltas
     state.prior = null;
@@ -407,5 +370,6 @@
   $("drawerClose").addEventListener("click", function () { $("drawer").hidden = true; });
   $("drawerScrim").addEventListener("click", function () { $("drawer").hidden = true; });
 
-  initAuth();
+  // No auth gate — open straight into the app.
+  bootstrap();
 })();
