@@ -372,6 +372,24 @@
   // =========================================================================
   // Saved weeks drawer (mode-aware)
   // =========================================================================
+  // Load a specific saved week into view (with its prior week for the comparison).
+  async function viewWeek(date, used) {
+    try {
+      var res = await api(ep("/api/snapshots?date=" + encodeURIComponent(date), used));
+      if (!res.snapshot) { toast("Could not load " + date); return; }
+      var pr = await api(ep("/api/snapshots?before=" + encodeURIComponent(date), used));
+      if (used) {
+        U.snap = res.snapshot; U.prior = pr.snapshot || null;
+        $("uDropzone").hidden = true; $("uDash").hidden = false; renderUsed();
+      } else {
+        state.snap = res.snapshot; state.prior = pr.snapshot || null;
+        $("dropzone").hidden = true; $("dash").hidden = false; render();
+      }
+      $("drawer").hidden = true;
+      toast("Viewing " + (res.snapshot.dateDisplay || date));
+    } catch (e) { /* 401 handled by api() */ }
+  }
+
   async function loadWeeks() {
     var used = state.mode === "used";
     var list = $("weeksList");
@@ -383,13 +401,22 @@
       var cur = used ? (U.snap && U.snap.date) : (state.snap && state.snap.date);
       list.innerHTML = items.map(function (it) {
         var isCur = it.date === cur;
-        return "<div class='week-item " + (isCur ? "current" : "") + "'>"
-          + "<div><div class='w-date'>" + (it.dateDisplay || it.date) + (isCur ? " · current" : "") + "</div>"
+        return "<div class='week-item " + (isCur ? "current" : "") + "' data-date='" + it.date + "' title='Click to view this week'>"
+          + "<div><div class='w-date'>" + (it.dateDisplay || it.date) + (isCur ? " · viewing" : "") + "</div>"
           + "<div class='w-sub'>" + (it.fileName || "") + "</div></div>"
-          + "<button class='del' data-date='" + it.date + "'>Delete</button></div>";
+          + "<div class='w-actions'><button class='view' data-date='" + it.date + "'>View</button>"
+          + "<button class='del' data-date='" + it.date + "'>Delete</button></div></div>";
       }).join("");
+      // click a row (or its View button) to load that week
+      Array.prototype.forEach.call(list.querySelectorAll(".week-item"), function (row) {
+        row.addEventListener("click", function (e) {
+          if (e.target.closest(".del")) return; // delete handled separately
+          viewWeek(row.dataset.date, used);
+        });
+      });
       Array.prototype.forEach.call(list.querySelectorAll(".del"), function (b) {
-        b.addEventListener("click", async function () {
+        b.addEventListener("click", async function (e) {
+          e.stopPropagation();
           if (!confirm("Delete the saved week " + b.dataset.date + "?")) return;
           await api(ep("/api/snapshots?date=" + encodeURIComponent(b.dataset.date), used), { method: "DELETE" });
           toast("Deleted " + b.dataset.date);

@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Inventory Cost Analysis</title>
-  <link rel="stylesheet" href="styles.build5.css" />
+  <link rel="stylesheet" href="styles.build6.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
@@ -161,7 +161,7 @@
         <h3 id="drawerTitle">Saved weeks</h3>
         <button id="drawerClose" class="linkbtn">Close</button>
       </div>
-      <p class="note">Each drop auto-saves its final numbers (keyed by the file's date). Delete removes that week from the server.</p>
+      <p class="note"><b>Click any week to view it</b> (with its comparison to the prior week). Each drop auto-saves its numbers; Delete removes that week.</p>
       <div id="weeksList" class="weeks-list"></div>
     </div>
     <div class="drawer-scrim" id="drawerScrim"></div>
@@ -170,6 +170,6 @@
   <div id="toast" class="toast" hidden></div>
 
   <script src="core.build3.js"></script>
-  <script src="app.build6.js"></script>
+  <script src="app.build7.js"></script>
 </body>
 </html>
